@@ -1,23 +1,27 @@
+// Page.js
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { createUserWithDeviceID } from "./firebase/authService";
+import { createUserWithDeviceID } from './firebase/authService';
+import { useUser } from './UserContext'; // Import the UserContext
 
+export default function Page() {
+  const { setUserId } = useUser(); // Get the setUserId function from context
 
-export default function page(){
   useEffect(() => {
-    // Call the function to create a user with the device ID
     const initializeUser = async () => {
       try {
         const userId = await createUserWithDeviceID();
-        console.log("User initialized:", userId);
+        console.log('User initialized with ID:', userId);
+        setUserId(userId); // Save the userId in context
       } catch (error) {
-        console.error("Failed to initialize user:", error);
+        console.error('Failed to initialize user:', error);
       }
     };
 
     initializeUser();
   }, []);
+
   const router = useRouter();
 
   return (
@@ -39,16 +43,15 @@ export default function page(){
 
       <TouchableOpacity 
         style={styles.button} 
-        onPress={() => router.replace("/(tabs)")}
+        onPress={() => router.replace("/(tabs)")} // Correctly navigate using router
       >
         <Text style={styles.buttonText}>Let’s Get Started! 😴</Text>
       </TouchableOpacity>
     </View>
   );
-};
+}
 
-// ... (styles remain the same)
-
+// Styles remain the same
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -101,4 +104,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

@@ -1,36 +1,25 @@
-import { Alert, StyleSheet, Text, View } from 'react-native';
-import React from 'react';
+import { Alert, StyleSheet, Text, View, Button } from 'react-native';
+import React, { useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { FIRESTORE_DB } from "../../FirebaseConfig"; 
-import { collection, addDoc } from "firebase/firestore";
 
 const SettingsScreen = () => {
-  const saveSessionToDatabase = async () => {
-    try {
-      await addDoc(collection(FIRESTORE_DB, ""), {
-        startDate,
-        startTime,
-        endDate,
-        endTime,
-        duration,
-        createdAt: new Date(), // Optional field to track the creation time
-      });
-      Alert.alert("Success", "Session saved successfully!");
-    } catch (error) {
-      console.error("Error saving session: ", error);
-      Alert.alert("Error", "Failed to save session. Please try again.");
-    }
-  };
+  const { startDate, startTime, endDate, endTime, duration, userId } = useLocalSearchParams();
 
-  const { startDate, startTime, endDate, endTime, duration } = useLocalSearchParams();
+  // Call saveSleepDataToDatabase when the component mounts or on some event (e.g., button press)
+  useEffect(() => {
+    // Optionally, call the function here or via a button
+    // saveSleepDataToDatabase();
+  }, []); // Uncomment this to save data when the component mounts
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Start Date: {startDate}</Text>
-      <Text style={styles.text}>Start Time: {startTime}</Text>
-      <Text style={styles.text}>End Date: {endDate}</Text>
-      <Text style={styles.text}>End Time: {endTime}</Text>
-      <Text style={styles.text}>Duration: {formatDuration(duration)}</Text>
+      <View style={styles.statsBox}>
+        <Text style={styles.text}>Start Date: {startDate}</Text>
+        <Text style={styles.text}>Start Time: {startTime}</Text>
+        <Text style={styles.text}>End Date: {endDate}</Text>
+        <Text style={styles.text}>End Time: {endTime}</Text>
+        <Text style={styles.text}>Duration: {formatDuration(duration)}</Text>
+      </View>
     </View>
   );
 };
@@ -45,14 +34,21 @@ const formatDuration = (duration) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#000022',
     alignItems: 'center',
-    backgroundColor: '#000022'
+    justifyContent: 'center'
   },
   text: {
     fontSize: 18,
     marginVertical: 5,
+    color: '#f5f5f5'
   },
+  statsBox: {
+    backgroundColor: '#292D63',
+    padding: 10,
+    borderRadius: 10,
+    justifyContent: 'center'
+  }
 });
 
 export default SettingsScreen;

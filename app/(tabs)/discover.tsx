@@ -1,7 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
-import { ProgressCircle } from 'react-native-svg-charts';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 
 export default function App() {
@@ -35,10 +34,10 @@ export default function App() {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
+      {/* Header with dynamic date */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Hôm nay, Thứ 7</Text>
-        <Text style={styles.headerDate}>24 Tháng tư 2023</Text>
+        <Text style={styles.headerTitle}>Hôm nay, {getVietnameseDay(currentTime.getDay())}</Text>
+        <Text style={styles.headerDate}>{getFormattedDate()}</Text>
       </View>
 
       {/* Sleep stats */}
@@ -62,7 +61,7 @@ export default function App() {
         </View>
         <View style={styles.infoBox2}>
           <Text style={styles.infoTitle}>Chất lượng giấc ngủ</Text>
-          <ProgressCircle style={styles.circleProgress} progress={0.75} progressColor={'green'} />
+          {/* <ProgressCircle style={styles.circleProgress} progress={0.75} progressColor={'green'} /> */}
           <Text style={styles.infoStatus}>Tốt</Text>
         </View>
       </View>
