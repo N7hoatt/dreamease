@@ -2,14 +2,26 @@ import { View, StyleSheet, LayoutChangeEvent } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import TabBarButton from "@/components/TabBarButton";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Colors } from "@/constants/Colors";
 import React from "react";
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const [dimensions, setDimensions] = useState({ height: 20, width: 100 });
 
+  // Calculate the width of each tab button dynamically based on the layout
   const buttonWidth = dimensions.width / state.routes.length;
+
+  // Shared value to control the position of the animated bar
+  const tabPositionX = useSharedValue(0);
+
+  // This effect ensures the bar is correctly positioned when the tab changes or the component mounts
+  useEffect(() => {
+    // Animate to the correct position of the focused tab
+    tabPositionX.value = withTiming(buttonWidth * state.index, {
+      duration: 200,
+    });
+  }, [state.index, buttonWidth]); // Re-run when focused tab or button width changes
 
   const onTabbarLayout = (e: LayoutChangeEvent) => {
     setDimensions({
@@ -17,25 +29,31 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       width: e.nativeEvent.layout.width,
     });
   };
-  
-  const tabPositionX = useSharedValue(0);
 
+  // Animated style to move the bar horizontally
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateX: tabPositionX.value }],
     };
   });
-  
+
   return (
     <View onLayout={onTabbarLayout} style={styles.tabbar}>
-      <Animated.View style={[animatedStyle, {
-        position: 'absolute',
-        backgroundColor: Colors.tint,
-        top: 52,
-        left: 24,
-        height: 8,
-        width: 48,
-      }]} />
+      {/* Animated indicator under the selected tab */}
+      <Animated.View
+        style={[
+          animatedStyle,
+          {
+            position: "absolute",
+            backgroundColor: Colors.tint,
+            top: dimensions.height - 10, // Adjust this based on your tab bar's layout
+            left: 0,
+            height: 8,
+            width: buttonWidth, // Make width dynamic
+            borderRadius: 4,
+          },
+        ]}
+      />
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =
@@ -48,10 +66,11 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         const isFocused = state.index === index;
 
         const onPress = () => {
+          // Animate tab indicator movement
           tabPositionX.value = withTiming(buttonWidth * index, {
             duration: 200,
-          }); 
-          
+          });
+
           const event = navigation.emit({
             type: "tabPress",
             target: route.key,
@@ -87,9 +106,11 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 const styles = StyleSheet.create({
   tabbar: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingTop: 16,
-    paddingBottom:40,
-    backgroundColor: "Colors.white",
-  }
-})
+    paddingBottom: 16, // Adjust this as necessary
+    backgroundColor: Colors.white,
+    alignItems: "center", // Ensure center alignment
+    position: "relative",
+  },
+});

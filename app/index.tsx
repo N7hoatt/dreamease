@@ -1,10 +1,23 @@
 import { useRouter } from "expo-router";
-import React from 'react';
+import React, { useEffect } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-
+import { createUserWithDeviceID } from "./firebase/authService";
 
 
 export default function page(){
+  useEffect(() => {
+    // Call the function to create a user with the device ID
+    const initializeUser = async () => {
+      try {
+        const userId = await createUserWithDeviceID();
+        console.log("User initialized:", userId);
+      } catch (error) {
+        console.error("Failed to initialize user:", error);
+      }
+    };
+
+    initializeUser();
+  }, []);
   const router = useRouter();
 
   return (

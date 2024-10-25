@@ -39,7 +39,7 @@ const Page = (props: Props) => {
     {/* Tabs Section */}
     <View style={styles.tabsSection}>
       <Button title="Days" onPress={() => {}} />
-      <Button title="Weeks" onPress={() => {}} color="#4E9FEE" />
+      <Button title="Weeks" onPress={() => {}}/>
       <Button title="Months" onPress={() => {}} />
       <Button title="All" onPress={() => {}} />
     </View>

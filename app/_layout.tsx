@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import React from 'react';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import SettingsScreen from '../app/(tabs)/settings';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -27,6 +28,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
       </Stack>
   );
 }
