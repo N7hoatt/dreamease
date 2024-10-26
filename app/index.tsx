@@ -1,14 +1,18 @@
 import { useRouter } from "expo-router";
-import React, {useEffect} from "react";
+import React, { useEffect } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { createUserWithDeviceID } from './firebase/authService';
+import { useUser } from "./UserContext"; // Import useUser to access context
 
 export default function Page() {
+  const { setUserId } = useUser(); // Destructure setUserId from context
+
   useEffect(() => {
     const initializeUser = async () => {
       try {
         const userId = await createUserWithDeviceID();
         console.log('User initialized with ID:', userId);
+        setUserId(userId); // Set the userId in context
       } catch (error) {
         console.error('Failed to initialize user:', error);
       }
@@ -16,7 +20,7 @@ export default function Page() {
 
     initializeUser();
   }, []);
-  // Use the useRouter hook to get access to the router
+
   const router = useRouter();
 
   return (
@@ -38,7 +42,7 @@ export default function Page() {
 
       <TouchableOpacity 
         style={styles.button} 
-        onPress={() => router.replace("/(tabs)")} // Correctly navigate using router
+        onPress={() => router.replace("/(tabs)")}
       >
         <Text style={styles.buttonText}>Let’s Get Started! 😴</Text>
       </TouchableOpacity>

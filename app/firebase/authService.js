@@ -3,7 +3,6 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
 import { getFirestore, doc, setDoc, collection, addDoc } from "firebase/firestore";
 import DeviceInfo from "react-native-device-info";
-import { useUser } from "../UserContext";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDmgdti_T5cYVNb-_Z6ABeJ9DMXmWzLC3s",
@@ -18,7 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const {setUserId} = useUser();
+// const {setUserId} = useUser();
 
 // Function to create a user with a unique device ID
 export const createUserWithDeviceID = async () => {
@@ -27,7 +26,6 @@ export const createUserWithDeviceID = async () => {
     const userCredential = await signInAnonymously(auth);
     const userId = userCredential.user.uid;
     console.log(userId);
-    setUserId(userId);
 
     // Create a new user document with userId and deviceId
     await setDoc(doc(db, "users", userId), {
