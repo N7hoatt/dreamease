@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { FIRESTORE_DB } from "../FirebaseConfig"; 
+import { db } from "../FirebaseConfig"; 
 import { useUser } from '../app/UserContext';
 import { doc, updateDoc, addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
@@ -49,17 +49,17 @@ const Stopwatch = () => {
       if (!startDate && !startTime) {
         setStartDate(currentDate);
         setStartTime(currentTime);
-        Alert.alert('Stopwatch Started', `Started at: ${currentTime} on ${currentDate}`);
+        Alert.alert('Bắt đầu', `Vào lúc: ${currentTime} ngày ${currentDate}`);
       }
       setShowNextPageButton(false); // Hide Next Page button when starting
     } else {
       // Stopping stopwatch
       const durationFormatted = formatTime(seconds);
-      setDurationMessage(`Duration: ${durationFormatted}`);
+      setDurationMessage(`Thời gian ngủ: ${durationFormatted}`);
       setDuration(seconds); // Store duration in seconds
       setEndDate(currentDate);
       setEndTime(currentTime);
-      Alert.alert('Stopwatch Stopped', durationFormatted);
+      Alert.alert('Đồng hồ đã dừng', durationFormatted);
       setShowNextPageButton(true); // Show Next Page button when stopped
       setShowClockButton(false);
     }
@@ -95,18 +95,30 @@ const Stopwatch = () => {
   };
 
   // Function to save sleep data to the user's document
+  // Function to save sleep data to the user's document
   const saveSleepDataToDatabase = async () => {
     try {
-      const sleepDateRef = collection(FIRESTORE_DB, "users", userId, "sleepDate");
-      const sleepSectionRef = collection(FIRESTORE_DB, "users", userId, "sleepSection");
+      // Ensure userId is available before proceeding
+      if (!userId) {
+        console.error("Error: User ID is not defined.");
+        Alert.alert("Error", "User ID is missing. Cannot save data.");
+        return;
+      }
   
-      const startDateTime = new Date(`${startDate}T${startTime}`); // Combine date and time for start
-      const endDateTime = new Date(`${endDate}T${endTime}`); // Combine date and time for end
+      // Set up collection references using the userId
+      const sleepDateRef = collection(db, "users", userId, "sleepDate");
+      const sleepSectionRef = collection(db, "users", userId, "sleepSection");
+  
+      // Define start and end times for sleep data
+      const DEFAULT_HOUR = 12;
+      const DEFAULT_MINUTE = 0;
+      const startDateTime = new Date(`${startDate}T${startTime}`);
+      const endDateTime = new Date(`${endDate}T${endTime}`);
       const midnight = new Date(startDateTime);
-      midnight.setHours(24, 0, 0, 0); // Set midnight for the start date
+      midnight.setHours(24, 0, 0, 0); // Set to midnight for the start date
   
       if (startDate === endDate) {
-        // If start and end dates are the same, just update as before
+        // If start and end dates are the same, save as a single document
         const q = query(sleepDateRef, where("date", "==", startDate));
         const querySnapshot = await getDocs(q);
   
@@ -115,33 +127,31 @@ const Stopwatch = () => {
           const existingData = querySnapshot.docs[0].data();
           const newDuration = (existingData.duration || 0) + duration;
   
-          await updateDoc(docRef, {
-            duration: newDuration
+          await updateDoc(docRef, { 
+            duration: newDuration,
           });
-  
           Alert.alert("Success", "Sleep data updated successfully!");
         } else {
-          await addDoc(sleepDateRef, {
-            date: startDate,
-            duration,
+          await addDoc(sleepDateRef, { 
+            date: startDate, 
+            duration: duration,
           });
-  
           Alert.alert("Success", "Sleep data saved successfully!");
         }
       } else {
-        // Different start and end dates
-        const durationBeforeMidnight = Math.floor((midnight - startDateTime) / 1000); // Duration in seconds until midnight
-        const durationAfterMidnight = Math.floor((endDateTime - midnight) / 1000); // Remaining duration after midnight
+        // Handle case where sleep spans midnight
+        const durationBeforeMidnight = Math.floor((midnight - startDateTime) / 1000);
+        const durationAfterMidnight = Math.floor((endDateTime - midnight) / 1000);
   
-        // Save the first record for the sleep before midnight
+        // Save data for time before midnight
         await addDoc(sleepDateRef, {
-          date: startDate,
+          date: startDate.setHours(DEFAULT_HOUR, DEFAULT_MINUTE, 0, 0),
           duration: durationBeforeMidnight,
         });
   
-        // Save the second record for the sleep after midnight
+        // Save data for time after midnight
         await addDoc(sleepDateRef, {
-          date: endDate,
+          date: endDate.setHours(DEFAULT_HOUR, DEFAULT_MINUTE, 0, 0),
           duration: durationAfterMidnight,
         });
   
@@ -150,9 +160,9 @@ const Stopwatch = () => {
   
       // Save the sleep section entry
       await addDoc(sleepSectionRef, {
-        startTime,
-        endTime,
-        duration,
+        startTime: startTime,
+        endTime: endTime,
+        duration: duration,
       });
   
     } catch (error) {
@@ -162,13 +172,15 @@ const Stopwatch = () => {
   };
   
 
+  
+
   return (
     <View style={styles.container}>
       <Text style={styles.timeText}>{formatTime(seconds)}</Text>
       {startDate && startTime ? (
         <View style={styles.startTimeContainer}>
-          <Text style={styles.startTimeText}>Start Date: {startDate}</Text>
-          <Text style={styles.startTimeText}>Start Time: {startTime}</Text>
+          <Text style={styles.startTimeText}>Ngày bắt đầu: {startDate}</Text>
+          <Text style={styles.startTimeText}>Giờ bắt đầu: {startTime}</Text>
         </View>
       ) : null}
 
@@ -178,11 +190,11 @@ const Stopwatch = () => {
         style={[styles.button, isRunning ? styles.stopButton : styles.startButton]} 
         onPress={handleStartStop}
       >
-        <Text style={styles.buttonText}>{isRunning ? 'Stop' : 'Start'}</Text>
+        <Text style={styles.buttonText}>{isRunning ? 'Dừng' : 'Bắt đầu'}</Text>
       </TouchableOpacity>)}
 
       <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-        <Text style={styles.buttonText}>Reset</Text>
+        <Text style={styles.buttonText}>Xóa</Text>
       </TouchableOpacity>
 
       {durationMessage ? <Text style={styles.durationText}>{durationMessage}</Text> : null}
@@ -190,7 +202,7 @@ const Stopwatch = () => {
       {/* Show Next Page Button only when the stopwatch has stopped */}
       {showNextPageButton && (
         <TouchableOpacity style={styles.nextPageButton} onPress={handleNextPage}>
-          <Text style={styles.buttonText}>Save</Text>
+          <Text style={styles.buttonText}>Lưu</Text>
         </TouchableOpacity>
       )}
     </View>

@@ -20,13 +20,13 @@ const TabLayout = () => {
       <Tabs.Screen
         name="saved"
         options={{
-          title: "Saved",
+          title: "Timer",
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: "Report",
         }}
       />
     </Tabs>

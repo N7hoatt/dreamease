@@ -13,12 +13,13 @@ const SettingsScreen = () => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Báo cáo giấc ngủ</Text>
       <View style={styles.statsBox}>
-        <Text style={styles.text}>Start Date: {startDate}</Text>
-        <Text style={styles.text}>Start Time: {startTime}</Text>
-        <Text style={styles.text}>End Date: {endDate}</Text>
-        <Text style={styles.text}>End Time: {endTime}</Text>
-        <Text style={styles.text}>Duration: {formatDuration(duration)}</Text>
+        <Text style={styles.text}>Ngày ngủ: {startDate}</Text>
+        <Text style={styles.text}>Thời gian ngủ: {startTime}</Text>
+        <Text style={styles.text}>Ngày dậy: {endDate}</Text>
+        <Text style={styles.text}>Thời gian dậy: {endTime}</Text>
+        <Text style={styles.text}>Tổng thời gian ngủ: {formatDuration(duration)}</Text>
       </View>
     </View>
   );
@@ -40,6 +41,12 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 18,
+    marginVertical: 5,
+    color: '#f5f5f5'
+  },
+  title: {
+    marginBottom: 40,
+    fontSize: 40,
     marginVertical: 5,
     color: '#f5f5f5'
   },
