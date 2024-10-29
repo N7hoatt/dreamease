@@ -1,10 +1,12 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import { getAverageSleepLast7Days , getLast7DaysSleepData} from '@/components/SleepCalculator';
 
 export default function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [averageSleep, setAverageSleep] = useState(null); // State for average sleep
+  const [sleepStats, setSleepStats] = useState([]); // State to store the 7-day sleep data
 
   // Update the time every second
   useEffect(() => {
@@ -15,13 +17,38 @@ export default function App() {
     return () => clearInterval(timer); // Cleanup on unmount
   }, []);
 
-  // Function to get the current day of the week in Vietnamese
+  // Fetch average sleep for the last 7 days on component mount
+  useEffect(() => {
+    const fetchAverageSleep = async () => {
+      try {
+        const userId = "yourUserId"; // Replace with actual userId as needed
+        const avgSleep = await getAverageSleepLast7Days(userId);
+        setAverageSleep(avgSleep);
+      } catch (error) {
+        console.error("Error fetching 7-day average sleep:", error);
+      }
+    };
+    fetchAverageSleep();
+  }, []);
+
+  useEffect(() => {
+    const fetchSleepData = async () => {
+      try {
+        const userId = "yourUserId"; // Replace with actual userId as needed
+        const sleepData = await getLast7DaysSleepData(userId);
+        setSleepStats(sleepData);
+      } catch (error) {
+        console.error("Error fetching sleep stats:", error);
+      }
+    };
+    fetchSleepData();
+  }, []);
+
   const getVietnameseDay = (dayIndex) => {
     const days = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
     return days[dayIndex];
   };
 
-  // Format the date in Vietnamese (e.g., 24 Tháng 10 2023)
   const getFormattedDate = () => {
     const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
     const day = currentTime.getDate();
@@ -29,8 +56,6 @@ export default function App() {
     const year = currentTime.getFullYear();
     return `${day} ${month} ${year}`;
   };
-
-  const data = [50, 10, 40, 95, 85, 35, 25, 50, 70, 80];
 
   return (
     <ScrollView style={styles.container}>
@@ -43,12 +68,16 @@ export default function App() {
       {/* Sleep stats */}
       <View style={styles.statsBox}>
         <View style={styles.statsRow}>
-          {["5h", "5h", "5h", "5h", "5h"].map((hour, index) => (
-            <View key={index} style={styles.statCircle}>
-              <Text style={styles.statText}>{hour}</Text>
-              <Text style={styles.statSubText}>Wd</Text>
-            </View>
-          ))}
+          {sleepStats.length > 0 ? (
+            sleepStats.map((data, index) => (
+              <View key={index} style={styles.statCircle}>
+                <Text style={styles.statText}>{data.duration}h</Text>
+                <Text style={styles.statSubText}>{getVietnameseDay(new Date(data.date).getDay())}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.loadingText}>Loading...</Text>
+          )}
         </View>
       </View>
 
@@ -56,12 +85,13 @@ export default function App() {
       <View style={styles.infoRow}>
         <View style={styles.infoBox1}>
           <Text style={styles.infoTitle}>Thời gian ngủ trung bình 1 tuần</Text>
-          <Text style={styles.infoValue}>6.2</Text>
+          <Text style={styles.infoValue}>
+            {averageSleep !== null ? `${averageSleep.toFixed(1)}` : 'Loading...'}
+          </Text>
           <Text style={styles.infoUnit}>giờ/ngày</Text>
         </View>
         <View style={styles.infoBox2}>
           <Text style={styles.infoTitle}>Chất lượng giấc ngủ</Text>
-          {/* <ProgressCircle style={styles.circleProgress} progress={0.75} progressColor={'green'} /> */}
           <Text style={styles.infoStatus}>Tốt</Text>
         </View>
       </View>
@@ -79,7 +109,6 @@ export default function App() {
         <MaterialIcons name="lightbulb-outline" size={24} color="white" />
         <Text style={styles.tipsText}>Các tips cho giấc ngủ</Text>
       </View>
-
     </ScrollView>
   );
 }
@@ -208,5 +237,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 30,
+  }, loadingText: {
+    color: 'white',
+    fontSize: 32,
   },
 });
