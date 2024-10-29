@@ -12,12 +12,6 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
-        name="discover"
-        options={{
-          title: "Discover",
-        }}
-      />
-      <Tabs.Screen
         name="saved"
         options={{
           title: "Timer",

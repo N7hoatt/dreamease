@@ -5,7 +5,6 @@ import React from 'react';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { UserProvider } from './UserContext'; // Adjust the import path as needed
-import SettingsScreen from '../app/(tabs)/settings';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

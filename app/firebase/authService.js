@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
 import { getFirestore, doc, setDoc, collection, addDoc } from "firebase/firestore";
-import DeviceInfo from "react-native-device-info";
+import { Platform, Alert } from "react-native";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDmgdti_T5cYVNb-_Z6ABeJ9DMXmWzLC3s",
@@ -17,20 +17,49 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-// const {setUserId} = useUser();
 
-// Function to create a user with a unique device ID
-export const createUserWithDeviceID = async () => {
+// Prompt user for email
+const getEmail = async () => {
+  return new Promise((resolve) => {
+    Alert.prompt(
+      "Email Address",
+      "Please enter your email address:",
+      [
+        {
+          text: "Cancel",
+          onPress: () => resolve(null),
+          style: "cancel",
+        },
+        {
+          text: "OK",
+          onPress: (email) => resolve(email),
+        },
+      ],
+      "plain-text"
+    );
+  });
+};
+
+// Function to create a user with an email address
+export const createUserWithEmail = async () => {
   try {
-    const deviceId = await DeviceInfo.getUniqueId();
+    // let email = null;
+
+    // // Check if running on Android or iOS
+    // if (Platform.OS === "android" || Platform.OS === "ios") {
+    //   email = await getEmail();
+    //   if (!email) {
+    //     throw new Error("Email is required on mobile devices.");
+    //   }
+    // }
+
     const userCredential = await signInAnonymously(auth);
     const userId = userCredential.user.uid;
-    console.log(userId);
 
-    // Create a new user document with userId and deviceId
+    // Create a new user document with userId and email
     await setDoc(doc(db, "users", userId), {
       userId,
-      deviceId,
+      // email,
       createdAt: new Date().toISOString(),
     });
 
