@@ -1,50 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import { getAverageSleepLast7Days , getLast7DaysSleepData} from '@/components/SleepCalculator';
+import { getAverageSleepLast7Days, getLast7DaysSleepData, getClosestSleep } from '@/components/SleepCalculator';
+import { useUser } from '../UserContext';
+import { DocumentData } from 'firebase/firestore';
 
 export default function App() {
+  const { userId } = useUser() || { userId: null };
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [averageSleep, setAverageSleep] = useState(null); // State for average sleep
-  const [sleepStats, setSleepStats] = useState([]); // State to store the 7-day sleep data
+  const [averageSleep, setAverageSleep] = useState<number | null>(null);
+  const [sleepStats, setSleepStats] = useState<DocumentData[]>([]);
+  const [closestSleep, setClosestSleep] = useState<DocumentData | null>(null);
+  const updateInterval = 3 * 1000; // Refresh interval for demo
 
-  // Update the time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
-    return () => clearInterval(timer); // Cleanup on unmount
-  }, []);
-
-  // Fetch average sleep for the last 7 days on component mount
-  useEffect(() => {
-    const fetchAverageSleep = async () => {
-      try {
-        const userId = "yourUserId"; // Replace with actual userId as needed
-        const avgSleep = await getAverageSleepLast7Days(userId);
-        setAverageSleep(avgSleep);
-      } catch (error) {
-        console.error("Error fetching 7-day average sleep:", error);
-      }
-    };
-    fetchAverageSleep();
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    const fetchSleepData = async () => {
-      try {
-        const userId = "yourUserId"; // Replace with actual userId as needed
-        const sleepData = await getLast7DaysSleepData(userId);
-        setSleepStats(sleepData);
-      } catch (error) {
-        console.error("Error fetching sleep stats:", error);
-      }
-    };
-    fetchSleepData();
-  }, []);
+    if (userId) {
+      const fetchData = async () => {
+        try {
+          const [avgSleep, sleepData, closest] = await Promise.all([
+            getAverageSleepLast7Days(userId),
+            getLast7DaysSleepData(userId),
+            getClosestSleep(userId)
+          ]);
 
-  const getVietnameseDay = (dayIndex) => {
+          setAverageSleep(avgSleep ?? null);
+          setSleepStats(sleepData ?? []);
+          setClosestSleep(closest ?? null);
+        } catch (error) {
+          console.error("Error fetching sleep data:", error);
+        }
+      };
+
+      fetchData(); // Initial fetch
+
+      // Set interval to refresh data
+      const interval = setInterval(fetchData, updateInterval);
+      return () => clearInterval(interval); // Cleanup on unmount
+    }
+  }, [userId]);
+
+  const getVietnameseDay = (dayIndex: number) => {
     const days = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
     return days[dayIndex];
   };
@@ -57,15 +60,22 @@ export default function App() {
     return `${day} ${month} ${year}`;
   };
 
+  const getSleepQuality = () => {
+    if (averageSleep === null) return { status: "Loading...", color: "white" };
+    if (averageSleep >= 8.0) return { status: "Tốt", color: "green" };
+    if (averageSleep >= 7.0 && averageSleep < 8.0) return { status: "Đủ", color: "yellow" };
+    return { status: "Thiếu", color: "red" };
+  };
+
+  const sleepQuality = getSleepQuality();
+
   return (
     <ScrollView style={styles.container}>
-      {/* Header with dynamic date */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Hôm nay, {getVietnameseDay(currentTime.getDay())}</Text>
         <Text style={styles.headerDate}>{getFormattedDate()}</Text>
       </View>
 
-      {/* Sleep stats */}
       <View style={styles.statsBox}>
         <View style={styles.statsRow}>
           {sleepStats.length > 0 ? (
@@ -81,30 +91,33 @@ export default function App() {
         </View>
       </View>
 
-      {/* Sleep Time & Quality */}
       <View style={styles.infoRow}>
         <View style={styles.infoBox1}>
           <Text style={styles.infoTitle}>Thời gian ngủ trung bình 1 tuần</Text>
-          <Text style={styles.infoValue}>
+          <Text style={[styles.infoValue, { color: sleepQuality.color }]}>
             {averageSleep !== null ? `${averageSleep.toFixed(1)}` : 'Loading...'}
           </Text>
           <Text style={styles.infoUnit}>giờ/ngày</Text>
         </View>
         <View style={styles.infoBox2}>
           <Text style={styles.infoTitle}>Chất lượng giấc ngủ</Text>
-          <Text style={styles.infoStatus}>Tốt</Text>
+          <Text style={[styles.infoStatus, { color: sleepQuality.color }]}>{sleepQuality.status}</Text>
         </View>
       </View>
 
-      {/* Recent Sleep Info */}
       <View style={styles.recentSleepInfo}>
-        <Text style={styles.recentSleepTimeTitle}>Thông tin giấc ngủ gần đây</Text>
-        <Text style={styles.recentSleepTime}>10:12 Bắt đầu ngủ</Text>
-        <Text style={styles.recentSleepTime}>07:12 Bắt đầu dậy</Text>
-        <Text style={styles.recentSleepDuration}>6h 52m Tổng thời gian đã ngủ</Text>
+        <Text style={styles.recentSleepTimeTitle}>Thông tin giấc ngủ gần nhất</Text>
+        {closestSleep ? (
+          <>
+            <Text style={styles.recentSleepTime}>Bắt đầu ngủ: {closestSleep.startTime}</Text>
+            <Text style={styles.recentSleepTime}>Thức dậy: {closestSleep.endTime}</Text>
+            <Text style={styles.recentSleepDuration}>Tổng thời gian đã ngủ: {closestSleep.duration} giờ</Text>
+          </>
+        ) : (
+          <Text style={styles.loadingText}>Loading...</Text>
+        )}
       </View>
 
-      {/* Tips for Sleep */}
       <View style={styles.tipsSection}>
         <MaterialIcons name="lightbulb-outline" size={24} color="white" />
         <Text style={styles.tipsText}>Các tips cho giấc ngủ</Text>
@@ -182,7 +195,7 @@ const styles = StyleSheet.create({
     color: 'white',
     marginTop: 10,
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 32,
   },
   infoValue: {
     color: 'white',
@@ -194,10 +207,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     textAlign: 'center',
-  },
-  circleProgress: {
-    marginTop: 10,
-    height: 100,
   },
   recentSleepTimeTitle: {
     textAlign: 'justify',
@@ -233,12 +242,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 10,
   },
-  footerNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 30,
-  }, loadingText: {
+  loadingText: {
     color: 'white',
-    fontSize: 32,
+    fontSize: 24,
   },
 });

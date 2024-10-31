@@ -1,9 +1,12 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react'; // Import useState
 
-const UserContext = createContext();
+export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState(null); // Correctly use useState
+
+  // Add your logic to set userId here
+  // e.g., you can fetch the user ID from an API or local storage
 
   return (
     <UserContext.Provider value={{ userId, setUserId }}>
@@ -12,4 +15,6 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+  return useContext(UserContext); // No arguments here
+};
